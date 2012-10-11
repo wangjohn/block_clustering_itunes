@@ -92,9 +92,12 @@ class Fitness:
         for i in xrange(len(double_line_breaks)):
             current_dlb = double_line_breaks[i]
             if not block_indices:
-                block_indices[(0, current_dlb)] = self.parameters.double_line_break_score
+				indices = (0, current_dlb)
             else:
-                block_indices[(double_line_breaks[i-1]+1, current_dlb))] = self.parameters.double_line_break_score
+				indices = (double_line_breaks[i-1]+1, current_dlb)
+			new_block = Block(indices)
+			new_block.set_subscore('double_line_break', self.parameters.double_line_break_score)
+			block_indices[indices] = new_block
 
         # we will use titles to check whether these blocks are reasonable
         self.num_titles_per_block(title_indices, block_indices)
@@ -109,14 +112,46 @@ class Fitness:
                 current_block = block_indices[block_counter]
             if title_position <= current_block[1] and title_position >= current_block[0]:
                 score = float(current_block[1] - title_position) / current_block[0]
-                 
 
+
+class Block:
+	def __init__(self, indices):
+		self.indices = indices
+		self.score = None
+		self.title_score = 0 
+		self.double_line_break_score = 0
+		self.list_score = None
+		self.url_score = None
+		self.score_hash = {
+			'title': 'self.title_score',
+			'double_line_break': 'self.double_line_break_score',
+			'list': 'self.list_score',
+			'url': 'self.url_score',
+		}
+
+	def __hash__(self):
+		return hash(self.indices)
+
+	def recompute_score(self):
+		self.score = self.double_line_break_score + self.title_score	
+		if self.list_score and self.url_score:
+			self.score -= self.parameters.list_url_collision_penalty 
+	
+	def set_subscore(self, score_type, score):
+		eval(self.score_hash[score_type] + "=" + str(score))
+		self.recompute_score()
+                 
 class Parameters:
     def __init__(self):
-        self.double_line_break_score = 5
-        self.title_score_threshold = 7 
+		# double line break parameters
+        self.double_line_break_score = 20
 
+		# title parameters
+        self.title_score_threshold = 7 
         self.strict_title_points = 10
         self.first_inline_title_points = 7
         self.any_inline_title_points = 1
+
+ 		# penalities for collisions of different block attributes
+		self.list_url_collision_penalty = 10 
 
