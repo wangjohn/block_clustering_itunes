@@ -1,16 +1,3 @@
-from urlparse import urlparse
-
-class Parser:
-    def __init__(self, description):
-        self.description = description
-
-    def calculate_likely_blocks(self):
-        self.description
-
-class LineOfText:
-    def __init__(self, line):
-        self.line = line
-
 class Fitness:
     def __init__(self, description):
         lines = description.split('\n')
