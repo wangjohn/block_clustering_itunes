@@ -9,31 +9,36 @@ class Fitness:
         self.parameters = params
 
     def check_first_n_letters(self, n):
-        first_letters = {}
-        numbers_score = 0
-        numbers_list = []
+        list_indices = []
         for i in xrange(len(self.text)):
             line = self.text[i]
             current_letters = line[0:n+1]
-            
-            # check if the first letters of each line are the same (for lists)
-            if current_letters in first_letters:
-                first_letters[current_letters][0] += 1
-                first_letters[current_letters[1].append(i)
-            else:
-                first_letters[current_letters] = [1, [i]]
 
-            # check if the first letters of each line are numbers
-            if re.match('^\d+'):
-                numbers_score += 1
-                numbers_list.append(i)
-        best_letters = None
-        for key, value in first_letters.iteritems():
-            if best_letters == None or value > best_letters[1]:
-                best_letters = (key, value)
-        current_max_score = max(best_letters[1], numbers_score)
-        return current_max_score
-        
+            new_block_indices = (i,i)
+            for j in xrange(self.parameters.list_spacing, 0, -1):
+                previous_letters = self.text[i-j][0:n+1]
+                if previous_letters == current_letters:
+                    new_block_indices = (i,j)
+
+            # add these indices to the list_indices if we've potentially found a list
+            if new_block_indices[0] != new_block_indices[1]:
+                if list_indices and list_indices[-1][1] < new_block_indices[0]:
+                    list_indices.append(new_block_indices)
+                elif list_indices and list_indices[-1][1] >= new_block_indices[0]:
+                    # if we intersect with the last block, then we merge them together into a single block
+                    last_block_indices = list_indices.pop()
+                    list_indices.append((last_block_indices[0], new_block_indices[1]))
+        # create the blocks based on the list indices that we just found
+        new_block_list = []
+        for indices in list_indices:
+            new_block = Block(indices, self.text[indices[0]:indices[1]+1])
+            length = indices[1] - indices[0]
+            list_score = length*self.parameters.list_length_weight + n*1.5
+            new_block.set_subscore('list', list_score)
+            new_block_list.append(new_block)
+
+        return new_block_list
+
     def check_double_line_break(self, line):
         # once we split up the text into lines by \n, we should have a line with nothing inside
         # if we have a \n\n anywhere in the text
@@ -95,7 +100,8 @@ class Fitness:
         self.num_titles_per_block(title_indices, self.potential_blocks)
         
         # check if we can merge any of these blocks into a list block
-        self.check_first_n_letters(2)
+        for j in xrange(1, 3, 1):
+            new_potential_blocks = self.check_first_n_letters(j)
 
 
     def num_titles_per_block(self, title_indices, blocks_hash):
@@ -134,6 +140,13 @@ class Block:
             'list': 'self.list_score',
             'url': 'self.url_score',
         }
+
+    def merge_scores(self, other_block):
+        self.title_score = max(self.title_score, other_block.title_score)
+        self.double_line_break_score = max(self.double_line_break_score, other_block.double_line_break_score)
+        self.list_score = max(self.list_score, other_block.list_score)
+        self.url_score = max(self.url_score, other_block.url_score)
+        self.recompute_score()
 
     def __hash__(self):
         return hash(self.indices)
