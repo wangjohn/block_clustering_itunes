@@ -1,10 +1,11 @@
 from parameters import * 
+import re
 
 class Fitness:
     def __init__(self, description, params = Parameters()):
         lines = description.split('\n')
         self.text = lines
-	    self.potential_blocks = {}
+        self.potential_blocks = {}
         self.parameters = params
 
     def check_first_n_letters(self, n):
@@ -97,37 +98,40 @@ class Fitness:
             while title_position > current_block[1]:
                 block_counter += 1
                 current_block = block_indices[block_counter]
+            score = 0
             if title_position <= current_block[1] and title_position >= current_block[0]:
                 # basically, we scale the score by how close the title is to the top of the block.
-                score = title_score*(1 - float(current_block[1] - title_position) / current_block[0])
-		block_object = blocks_hash[current_block]
-		block_object.set_subscore('title', score)
+                if current_block[1] - current_block[0] == 0:
+                    score = title_score
+                else:
+                    score = title_score*(float(current_block[1] - title_position) / (current_block[1] - current_block[0]))
+		    block_object = blocks_hash[current_block]
+		    block_object.set_subscore('title', score)
 
 
 class Block:
-	def __init__(self, indices):
-		self.indices = indices
-		self.score = None
-		self.title_score = 0 
-		self.double_line_break_score = 0
-		self.list_score = None
-		self.url_score = None
-		self.score_hash = {
-			'title': 'self.title_score',
-			'double_line_break': 'self.double_line_break_score',
-			'list': 'self.list_score',
-			'url': 'self.url_score',
-		}
+    def __init__(self, indices):
+        self.indices = indices
+        self.score = None
+        self.title_score = 0 
+        self.double_line_break_score = 0
+        self.list_score = None
+        self.url_score = None
+        self.score_hash = {
+            'title': 'self.title_score',
+            'double_line_break': 'self.double_line_break_score',
+            'list': 'self.list_score',
+            'url': 'self.url_score',
+        }
 
-	def __hash__(self):
-		return hash(self.indices)
+    def __hash__(self):
+        return hash(self.indices)
 
-	def recompute_score(self):
-		self.score = self.double_line_break_score + self.title_score	
-
-        # if the block has both list and url elements, then something went wrong and we should penalize for that
-		if self.list_score and self.url_score:
-			self.score -= self.parameters.list_url_collision_penalty 
+    def recompute_score(self):
+        self.score = self.double_line_break_score + self.title_score	
+# if block has both list and url elements, then something went wrong and we should penalize for that
+        if self.list_score and self.url_score:
+            self.score -= self.parameters.list_url_collision_penalty 
         else:
             if self.list_score:
                 self.score += self.list_score

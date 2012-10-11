@@ -1,0 +1,14 @@
+(dp0
+S'title'
+p1
+V\u25bbSudoku
+p2
+sS'description'
+p3
+S'<p>\xe2\x96\xbbSudoku is Sudoku with Point System, Runs, and Online Leaderboards. Discover the next evolution of Sudoku with amazing graphics, animations, and ease of use. This is a Sudoku like one you have never experienced before ;)<br/><br/>...Thousands of puzzles, all free.  Top class puzzles with selectable level of difficulty :)<br/>________________________________<br/>To the classic Sudoku, we added:<br/><br/>=&gt; A smart point system, wherein your score is based on 1) the value of each number multiplied (at the time of its match) by a multiplier that decreases in time and 2) the value of each block, row, column multiplied (at the time of its completion) by the decreasing multiplier<br/><br/>=&gt; Thanks to Game Center, you can now rank and compare Sudoku scores and achievements against friends and strangers<br/><br/>=&gt; \xe2\x96\xbbSudoku also counts the runs, that is, each uninterrupted sequence of games won, and adds them to the online leaderboards <br/>________________________________<br/>In \xe2\x96\xbbSudoku, you win a game when you solve a puzzle with 3 errors or less (we used this threshold to give a bit of slack for mis-tapping :) Also, you have a number of hints to help you play (more at the easy, less at the hard level). To fit any taste, you can choose between a lush tile look or a more classic board look :) <br/>________________________________ <br/>You gain access to medium level after you win the easy level 2 times consecutively, same for hard level (3 times)<br/>________________________________<br/>What our testers are saying:<br/><br/>\xe2\x80\xa2 "The game is perfect! I am really loving \xe2\x96\xbbSudoku. It is very addicting and fun, absolutely the best sudoku I have ever played."<br/>\xe2\x80\xa2 "Fabulous! You turned me into a \xe2\x96\xbbSudoku fan hook, line and sinker :)"<br/>\xe2\x80\xa2 "The gameplay of \xe2\x96\xbbSudoku is great, very smooth."<br/>\xe2\x80\xa2 "Great app - love it! Well done! Love the start up sounds/music!"</p>'
+p4
+sS'appid'
+p5
+S'366247306'
+p6
+s.
