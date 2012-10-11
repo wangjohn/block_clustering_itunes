@@ -11,18 +11,22 @@ class Fitness:
     def check_first_n_letters(self, n):
         first_letters = {}
         numbers_score = 0
-        for line in self.text:
+        numbers_list = []
+        for i in xrange(len(self.text)):
+            line = self.text[i]
             current_letters = line[0:n+1]
             
             # check if the first letters of each line are the same (for lists)
             if current_letters in first_letters:
-                first_letters[current_letters] += 1
+                first_letters[current_letters][0] += 1
+                first_letters[current_letters[1].append(i)
             else:
-                first_letters[current_letters] = 1
+                first_letters[current_letters] = [1, [i]]
 
             # check if the first letters of each line are numbers
             if re.match('^\d+'):
                 numbers_score += 1
+                numbers_list.append(i)
         best_letters = None
         for key, value in first_letters.iteritems():
             if best_letters == None or value > best_letters[1]:
@@ -61,7 +65,7 @@ class Fitness:
             final_result = self.parameters.any_inline_title_points
         return final_result 
 
-    def dp_get_fitness(self):
+    def get_potential_blocks(self):
         num_lines = len(self.text)
 
         title_indices = []          # get the line indices of the probable titles
@@ -79,23 +83,28 @@ class Fitness:
         # we will assume that a block starts at the first line.
         for i in xrange(len(double_line_breaks)):
             current_dlb = double_line_breaks[i]
-            if not block_indices:
-		indices = (0, current_dlb)
+            if i == 0:
+		        indices = (0, current_dlb)
             else:
-		indices = (double_line_breaks[i-1]+1, current_dlb)
-		new_block = Block(indices)
-		new_block.set_subscore('double_line_break', self.parameters.double_line_break_score)
-		self.potential_blocks[indices] = new_block
+                indices = (double_line_breaks[i-1]+1, current_dlb)
+            new_block = Block(indices, self.text[indices[0]:indices[1]+1])
+            new_block.set_subscore('double_line_break', self.parameters.double_line_break_score)
+            self.potential_blocks[indices] = new_block
 
         # we will use titles to check whether these blocks are reasonable
         self.num_titles_per_block(title_indices, self.potential_blocks)
+        
+        # check if we can merge any of these blocks into a list block
+        self.check_first_n_letters(2)
 
-    def num_titles_per_block(title_indices, blocks_hash):
-        block_indices = blocks_hash.keys.sort()
+
+    def num_titles_per_block(self, title_indices, blocks_hash):
+        block_indices = blocks_hash.keys()
+        block_indices.sort()
         block_counter = 0
         current_block = block_indices[block_counter]
         for (title_position, title_score) in title_indices:
-            while title_position > current_block[1]:
+            while title_position > current_block[1] and block_counter < len(block_indices) - 1:
                 block_counter += 1
                 current_block = block_indices[block_counter]
             score = 0
@@ -110,8 +119,10 @@ class Fitness:
 
 
 class Block:
-    def __init__(self, indices):
+    def __init__(self, indices, text):
         self.indices = indices
+        self.text = text
+
         self.score = None
         self.title_score = 0 
         self.double_line_break_score = 0
@@ -127,6 +138,9 @@ class Block:
     def __hash__(self):
         return hash(self.indices)
 
+    def __str__(self):
+        return str(self.indices) + ":\n" + '\n'.join(self.text)
+
     def recompute_score(self):
         self.score = self.double_line_break_score + self.title_score	
 # if block has both list and url elements, then something went wrong and we should penalize for that
@@ -138,7 +152,7 @@ class Block:
             if self.url_score:
                 self.score += self.url_score
 	
-	def set_subscore(self, score_type, score):
-		eval(self.score_hash[score_type] + "=" + str(score))
-		self.recompute_score()
+    def set_subscore(self, score_type, score):
+        locals()[self.score_hash[score_type]] = score
+        self.recompute_score()
                  
