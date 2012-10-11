@@ -104,13 +104,12 @@ class Fitness:
         block_counter = 0
         current_block = block_indices[block_counter]
         for title_position in title_indices:
-            if title_position <= current_block[1] and title_position >= current_block[0]:
-                score = float(current_block[1] - title_position) / current_block[0]
-            elif title_position > current_block[0]:
+            while title_position > current_block[1]:
                 block_counter += 1
                 current_block = block_indices[block_counter]
-
-
+            if title_position <= current_block[1] and title_position >= current_block[0]:
+                score = float(current_block[1] - title_position) / current_block[0]
+                 
 
 class Parameters:
     def __init__(self):
