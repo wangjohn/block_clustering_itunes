@@ -7,7 +7,29 @@ class Parser:
     def calculate_likely_blocks(self):
         self.description
 
+class MaxBlockCover:
+    def __init__(self, list_of_blocks):
+        self.blocks = list_of_blocks
 
+    # the current algorithm is an 2-approximation. Not going to do any better than this because the problem is NP-hard.
+    def get_max_covering(self, max_index=None):
+        # first sort the blocks by their heuristic score
+        sorted_blocks = sorted(self.blocks, attrgetter('score'))
+        output = []
+
+        # now get the set of blocks with a high total score 
+        for block in sorted_blocks:
+            (new_i, new_j) = block.indices
+            should_append = True
+            for output_block in output:
+                (old_i, old_j) = output_block.indices
+                # if the new block doesn't intersect with the old ones, append it
+                if not ((new_i >= old_i and new_j <= old_j) or (new_i >= old_i and new_i <= old_j) or (new_j <= old_j and new_i <= new_j)):
+                    should_append = False
+                    break
+            if should_append:
+                output.append(block)
+        return output
 
 class LineOfText:
     def __init__(self, line):
@@ -17,7 +39,7 @@ class Fitness:
     def __init__(self, description):
         lines = description.split('\n')
         self.text = lines
-	self.potential_blocks = {}
+	    self.potential_blocks = {}
 
     def check_first_n_letters(self, n):
         first_letters = {}
@@ -143,18 +165,3 @@ class Block:
 		eval(self.score_hash[score_type] + "=" + str(score))
 		self.recompute_score()
                  
-class Parameters:
-    def __init__(self):
-	# double line break parameters
-        self.double_line_break_score = 20
-
-        # title parameters
-        self.title_score = 10
-        self.title_score_threshold = 7 
-        self.strict_title_points = 10
-        self.first_inline_title_points = 7
-        self.any_inline_title_points = 1
-
- 	# penalities for collisions of different block attributes
-	self.list_url_collision_penalty = 10 
-
