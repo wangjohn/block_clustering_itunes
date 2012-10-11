@@ -17,6 +17,7 @@ class Fitness:
     def __init__(self, description):
         lines = description.split('\n')
         self.text = lines
+	self.potential_blocks = {}
 
     def check_first_n_letters(self, n):
         first_letters = {}
@@ -88,19 +89,18 @@ class Fitness:
                     double_line_breaks.append(i)
 
         # we will assume that a block starts at the first line.
-        block_indices = {}  # this is a hash of how reasonable each block is
         for i in xrange(len(double_line_breaks)):
             current_dlb = double_line_breaks[i]
             if not block_indices:
-				indices = (0, current_dlb)
+		indices = (0, current_dlb)
             else:
-				indices = (double_line_breaks[i-1]+1, current_dlb)
-			new_block = Block(indices)
-			new_block.set_subscore('double_line_break', self.parameters.double_line_break_score)
-			block_indices[indices] = new_block
+		indices = (double_line_breaks[i-1]+1, current_dlb)
+		new_block = Block(indices)
+		new_block.set_subscore('double_line_break', self.parameters.double_line_break_score)
+		self.potential_blocks[indices] = new_block
 
         # we will use titles to check whether these blocks are reasonable
-        self.num_titles_per_block(title_indices, block_indices)
+        self.num_titles_per_block(title_indices, self.potential_blocks)
 
     def num_titles_per_block(title_indices, blocks_hash):
         block_indices = blocks_hash.keys.sort()
@@ -112,6 +112,8 @@ class Fitness:
                 current_block = block_indices[block_counter]
             if title_position <= current_block[1] and title_position >= current_block[0]:
                 score = float(current_block[1] - title_position) / current_block[0]
+		block_object = blocks_hash[current_block]
+		block_object.set_subscore('title', self.parameters.title_score)
 
 
 class Block:
@@ -143,15 +145,16 @@ class Block:
                  
 class Parameters:
     def __init__(self):
-		# double line break parameters
+	# double line break parameters
         self.double_line_break_score = 20
 
-		# title parameters
+        # title parameters
+        self.title_score = 10
         self.title_score_threshold = 7 
         self.strict_title_points = 10
         self.first_inline_title_points = 7
         self.any_inline_title_points = 1
 
- 		# penalities for collisions of different block attributes
-		self.list_url_collision_penalty = 10 
+ 	# penalities for collisions of different block attributes
+	self.list_url_collision_penalty = 10 
 
