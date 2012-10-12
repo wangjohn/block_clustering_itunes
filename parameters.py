@@ -4,10 +4,10 @@ class Parameters:
         self.double_line_break_score = 20
 
         # title parameters
-        self.title_score_threshold = 7
         self.strict_title_points = 10
         self.first_inline_title_points = 7
         self.any_inline_title_points = 1
+        self.paragraph_score_weight = 0.25
 
         # list parameters
         self.minimum_list_length = 2

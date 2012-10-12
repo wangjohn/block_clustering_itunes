@@ -1,5 +1,6 @@
 from parameters import * 
 import re
+import math
 
 class Fitness:
     def __init__(self, description, params = Parameters()):
@@ -139,9 +140,24 @@ class Fitness:
                     score = title_score
                 else:
                     score = title_score*(float(current_block[1] - title_position) / (current_block[1] - current_block[0]))
+                    # we also check how many words there are in the 
+                    score += self.parameters.paragraph_score_weight*self.get_paragraph_score('\n'.join(self.text[current_block[0]:current_block[1]+1]))
 		    block_object = blocks_hash[current_block]
 		    block_object.set_subscore('title', score)
 
+    # returns a score which gives gives the probability that this piece of text is in paragraph style 
+    def get_paragraph_score(self, text):
+        words = text.split(' ')
+        num_words = len(words)
+
+        # number of real punctuation marks, minus number of list punctuation marks
+        text_punctuation = len(re.findall('[.!?]', text))
+        list_punctuation = len(re.findall('[-]', text))
+
+        score = math.log(num_words, 1.5)
+        score += math.log(text_punctuation + 1, 1.35)
+        score -= math.log(list_punctuation + 1, 1.35)
+        return score
 
 class Block:
     def __init__(self, indices, text):
