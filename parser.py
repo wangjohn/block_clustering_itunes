@@ -8,26 +8,41 @@ class Fitness:
         self.potential_blocks = {}
         self.parameters = params
 
+    def get_first_nonwhitespace_letters(self, string, n):
+        return string.strip()[0:n]
+
+    # checks to see if the first n letters of line i are the same as the first n letters of line j in the text
+    def first_n_equal(self, i, j, n):
+        letters_i = self.get_first_nonwhitespace_letters(self.text[i], n)
+        letters_j = self.get_first_nonwhitespace_letters(self.text[j], n)
+        if letters_i == "" or letters_j == "":
+            return False
+        return letters_i == letters_j
+
     def check_first_n_letters(self, n):
         list_indices = []
         for i in xrange(len(self.text)):
-            line = self.text[i]
-            current_letters = line[0:n+1]
 
             new_block_indices = (i,i)
             for j in xrange(self.parameters.list_spacing, 0, -1):
-                previous_letters = self.text[i-j][0:n+1]
-                if previous_letters == current_letters:
-                    new_block_indices = (i,j)
+                if self.first_n_equal(i-j, i, n):
+                    new_block_indices = (i-j,i)
 
             # add these indices to the list_indices if we've potentially found a list
             if new_block_indices[0] != new_block_indices[1]:
-                if list_indices and list_indices[-1][1] < new_block_indices[0]:
+                found_in_list_indices = False
+                if list_indices:
+                    # look through previous indices to see if we've intersected with anything before us
+                    for i in xrange(len(list_indices)):
+                        if new_block_indices[0] <= list_indices[i][1] and self.first_n_equal(new_block_indices[0], list_indices[i][0], n):
+                            # if we intersect with the last block, then we merge them together into a single block
+                            old_index = list_indices.pop(i)
+                            list_indices.append((old_index[0], new_block_indices[1]))
+                            found_in_list_indices = True
+                            break
+                if not found_in_list_indices:
+                    # if we don't intersect, then we just append it to the end of the indices
                     list_indices.append(new_block_indices)
-                elif list_indices and list_indices[-1][1] >= new_block_indices[0]:
-                    # if we intersect with the last block, then we merge them together into a single block
-                    last_block_indices = list_indices.pop()
-                    list_indices.append((last_block_indices[0], new_block_indices[1]))
         # create the blocks based on the list indices that we just found
         new_block_list = []
         for indices in list_indices:
@@ -96,13 +111,17 @@ class Fitness:
             new_block.set_subscore('double_line_break', self.parameters.double_line_break_score)
             self.potential_blocks[indices] = new_block
 
+        # check if we can merge any of these blocks into a list block
+        for j in xrange(2, 4, 1):
+            new_potential_blocks = self.check_first_n_letters(j)
+            for block in new_potential_blocks:
+                if block.indices in self.potential_blocks:
+                    self.potential_blocks[block.indices].merge_scores(block)
+                else:
+                    self.potential_blocks[block.indices] = block
+
         # we will use titles to check whether these blocks are reasonable
         self.num_titles_per_block(title_indices, self.potential_blocks)
-        
-        # check if we can merge any of these blocks into a list block
-        for j in xrange(1, 3, 1):
-            new_potential_blocks = self.check_first_n_letters(j)
-
 
     def num_titles_per_block(self, title_indices, blocks_hash):
         block_indices = blocks_hash.keys()
@@ -130,22 +149,16 @@ class Block:
         self.text = text
 
         self.score = None
-        self.title_score = 0 
-        self.double_line_break_score = 0
-        self.list_score = None
-        self.url_score = None
         self.score_hash = {
-            'title': 'self.title_score',
-            'double_line_break': 'self.double_line_break_score',
-            'list': 'self.list_score',
-            'url': 'self.url_score',
+            'title': 0,
+            'double_line_break': 0,
+            'list': None,
+            'url': None,
         }
 
     def merge_scores(self, other_block):
-        self.title_score = max(self.title_score, other_block.title_score)
-        self.double_line_break_score = max(self.double_line_break_score, other_block.double_line_break_score)
-        self.list_score = max(self.list_score, other_block.list_score)
-        self.url_score = max(self.url_score, other_block.url_score)
+        for score_type in ['title', 'double_line_break', 'list', 'url']:
+            self.score_hash[score_type] = max(self.score_hash[score_type], other_block.score_hash[score_type])
         self.recompute_score()
 
     def __hash__(self):
@@ -155,17 +168,17 @@ class Block:
         return str(self.indices) + ":\n" + '\n'.join(self.text)
 
     def recompute_score(self):
-        self.score = self.double_line_break_score + self.title_score	
-# if block has both list and url elements, then something went wrong and we should penalize for that
-        if self.list_score and self.url_score:
+        self.score = self.score_hash['double_line_break'] + self.score_hash['title']	
+        # if block has both list and url elements, then something went wrong and we should penalize for that
+        if self.score_hash['list'] and self.score_hash['url']:
             self.score -= self.parameters.list_url_collision_penalty 
         else:
-            if self.list_score:
-                self.score += self.list_score
-            if self.url_score:
-                self.score += self.url_score
+            if self.score_hash['list']:
+                self.score += self.score_hash['list']
+            if self.score_hash['url']:
+                self.score += self.score_hash['url']
 	
     def set_subscore(self, score_type, score):
-        locals()[self.score_hash[score_type]] = score
+        self.score_hash[score_type] = score
         self.recompute_score()
                  

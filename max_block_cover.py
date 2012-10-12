@@ -7,13 +7,13 @@ class MaxBlockCover:
     # the current algorithm is an 2-approximation. Not going to do any better than this because the problem is NP-hard.
     def get_max_covering(self):
         # first sort the blocks by their heuristic score
-        sorted_indices = self.blocks.keys()
-        sorted_indices.sort()
+        sorted_blocks = self.blocks.values()
+        sorted_blocks.sort(key = lambda x : -x.score)
         output = []
 
         # now get the set of blocks with a high total score 
-        for indices in sorted_indices:
-            (new_i, new_j) = indices
+        for block in sorted_blocks:
+            (new_i, new_j) = block.indices
             should_append = True
             for output_block in output:
                 (old_i, old_j) = output_block.indices
@@ -22,6 +22,6 @@ class MaxBlockCover:
                     should_append = False
                     break
             if should_append:
-                output.append(self.blocks[indices])
+                output.append(block)
         return output
-
+ 
