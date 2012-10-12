@@ -7,7 +7,7 @@ class Parameters:
         self.strict_title_points = 10
         self.first_inline_title_points = 7
         self.any_inline_title_points = 1
-        self.paragraph_score_weight = 0.25
+        self.paragraph_score_weight = 0.1
 
         # list parameters
         self.minimum_list_length = 2
@@ -15,5 +15,5 @@ class Parameters:
         self.list_length_weight = 2
 
         # penalities for collisions of different block attributes
-        self.list_url_collision_penalty = 10
+        self.list_url_collision_penalty = 5 
 

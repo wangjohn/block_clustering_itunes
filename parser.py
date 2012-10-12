@@ -47,7 +47,7 @@ class Fitness:
         # create the blocks based on the list indices that we just found
         new_block_list = []
         for indices in list_indices:
-            new_block = Block(indices, self.text[indices[0]:indices[1]+1])
+            new_block = Block(indices, self.text[indices[0]:indices[1]+1], self.parameters)
             length = indices[1] - indices[0]
             list_score = length*self.parameters.list_length_weight + n*1.5
             new_block.set_subscore('list', list_score)
@@ -62,8 +62,8 @@ class Fitness:
             return False
         return True
 
-    def check_for_url(self):
-        result = re.findall("(https?://|ftp://)?(www.)(.*?)(.com|.net|.io)", self.text)
+    def check_for_url(self, text):
+        result = re.findall("(https?://|ftp://)?(www.)(.*?)(.com|.net|.io)", text)
         if result:
             return len(result)
         else:
@@ -108,7 +108,7 @@ class Fitness:
 		        indices = (0, current_dlb)
             else:
                 indices = (double_line_breaks[i-1]+1, current_dlb)
-            new_block = Block(indices, self.text[indices[0]:indices[1]+1])
+            new_block = Block(indices, self.text[indices[0]:indices[1]+1], self.parameters)
             new_block.set_subscore('double_line_break', self.parameters.double_line_break_score)
             self.potential_blocks[indices] = new_block
 
@@ -123,6 +123,15 @@ class Fitness:
 
         # we will use titles to check whether these blocks are reasonable
         self.num_titles_per_block(title_indices, self.potential_blocks)
+
+        # also use urls to check the block scores
+        self.get_url_scores()
+
+    def get_url_scores(self):
+        for block in self.potential_blocks.itervalues():
+            num_urls = self.check_for_url('\n'.join(block.text))
+            url_score = 2**(num_urls)
+            block.set_subscore('url', url_score)
 
     def num_titles_per_block(self, title_indices, blocks_hash):
         block_indices = blocks_hash.keys()
@@ -160,9 +169,10 @@ class Fitness:
         return score
 
 class Block:
-    def __init__(self, indices, text):
+    def __init__(self, indices, text, params):
         self.indices = indices
         self.text = text
+        self.parameters = params
 
         self.score = None
         self.score_hash = {
@@ -188,11 +198,10 @@ class Block:
         # if block has both list and url elements, then something went wrong and we should penalize for that
         if self.score_hash['list'] and self.score_hash['url']:
             self.score -= self.parameters.list_url_collision_penalty 
-        else:
-            if self.score_hash['list']:
-                self.score += self.score_hash['list']
-            if self.score_hash['url']:
-                self.score += self.score_hash['url']
+        if self.score_hash['list']:
+            self.score += self.score_hash['list']
+        if self.score_hash['url']:
+            self.score += self.score_hash['url']
 	
     def set_subscore(self, score_type, score):
         self.score_hash[score_type] = score

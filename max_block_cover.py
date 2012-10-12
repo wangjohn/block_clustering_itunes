@@ -9,6 +9,8 @@ class MaxBlockCover:
         # first sort the blocks by their heuristic score
         sorted_blocks = self.blocks.values()
         sorted_blocks.sort(key = lambda x : -x.score)
+        for block in sorted_blocks:
+            print block.indices, block.score
         output = []
 
         # now get the set of blocks with a high total score 
